@@ -7,7 +7,7 @@ const EVENT_TYPES = ['Wedding', 'Corporate', 'Graduation', 'Birthday', 'Other'];
 const emptyForm = {
   fullName: '', phone: '', email: '',
   eventType: 'Wedding', eventDate: '', eventTime: '', guestCount: '',
-  serviceType: 'pickup', eventLocation: '',
+  serviceType: 'drop_off', eventLocation: '', withinDeliveryRadius: true,
   packages: ['fajita_mixed'], addons: [],
   budget: '', specialInstructions: '', promoCode: '',
 };
@@ -37,11 +37,12 @@ export default function RequestQuote() {
         serviceType: form.serviceType,
         guestCount: form.guestCount,
         promoCode: form.promoCode,
+        withinDeliveryRadius: form.withinDeliveryRadius,
       }).then((q) => { setPreview(q); setPreviewError(null); })
         .catch((e) => { setPreview(null); setPreviewError(e.message); });
     }, 350);
     return () => clearTimeout(t);
-  }, [form.packages, form.addons, form.serviceType, form.guestCount, form.promoCode, guestsValid]);
+  }, [form.packages, form.addons, form.serviceType, form.guestCount, form.promoCode, form.withinDeliveryRadius, guestsValid]);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -125,18 +126,43 @@ export default function RequestQuote() {
             <input className="input" type="number" min="10" value={form.guestCount} onChange={(e) => update('guestCount', e.target.value)} required />
           </Field>
           <Field label="Service Type" required>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid gap-3">
               {Object.entries(options.serviceTypes).map(([key, s]) => (
                 <button type="button" key={key}
                   onClick={() => update('serviceType', key)}
-                  className={form.serviceType === key ? 'pill-select-on' : 'pill-select-off'}>
-                  {s.label}
+                  className={`text-left ${form.serviceType === key ? 'pill-select-on' : 'pill-select-off'}`}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span>{s.label}</span>
+                    <span className="text-xs opacity-70 font-normal whitespace-nowrap">
+                      {s.serviceChargeRate > 0 ? `${(s.serviceChargeRate * 100).toFixed(0)}% service charge` : 'No service charge'}
+                    </span>
+                  </div>
+                  <div className="text-xs opacity-70 font-normal mt-1">{s.description}</div>
                 </button>
               ))}
             </div>
           </Field>
           <Field label="Event Location" required>
             <input className="input" placeholder="Street address, city" value={form.eventLocation} onChange={(e) => update('eventLocation', e.target.value)} required />
+          </Field>
+          <Field label="Is your location within 10 miles of Aubrey, TX?">
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button"
+                onClick={() => update('withinDeliveryRadius', true)}
+                className={form.withinDeliveryRadius ? 'pill-select-on' : 'pill-select-off'}>
+                Yes
+              </button>
+              <button type="button"
+                onClick={() => update('withinDeliveryRadius', false)}
+                className={!form.withinDeliveryRadius ? 'pill-select-on' : 'pill-select-off'}>
+                No / Not sure
+              </button>
+            </div>
+            {!form.withinDeliveryRadius && (
+              <p className="text-xs text-accent-orange mt-2">
+                Additional delivery fees may apply outside our 10-mile radius — we'll confirm the exact amount when we follow up.
+              </p>
+            )}
           </Field>
         </FormSection>
 
@@ -194,19 +220,26 @@ export default function RequestQuote() {
             )}
             {preview && !preview.requiresManualQuote && (
               <div className="text-sm space-y-1.5">
+                <div className="text-cream/60 text-xs mb-2">Service: {preview.serviceType.label}</div>
                 {preview.packages.map((p) => (
                   <Row key={p.key} label={`${p.label} × ${preview.guestCount} guests`} value={p.total} />
                 ))}
                 {preview.addons.map((a) => <Row key={a.key} label={a.label} value={a.total} />)}
-                <Row label={preview.serviceType.label} value={preview.serviceType.total} />
                 {preview.breakdown.discountAmount > 0 && (
                   <Row label={preview.breakdown.discountLabel} value={-preview.breakdown.discountAmount} accent="green" />
                 )}
-                <Row label={`Service Charge (${(preview.breakdown.serviceChargeRate * 100).toFixed(0)}%)`} value={preview.breakdown.serviceCharge} />
+                {preview.breakdown.serviceChargeRate > 0 && (
+                  <Row label={`Service Charge (${(preview.breakdown.serviceChargeRate * 100).toFixed(0)}%)`} value={preview.breakdown.serviceCharge} />
+                )}
                 <Row label={`Tax (${(preview.breakdown.taxRate * 100).toFixed(2)}%)`} value={preview.breakdown.tax} />
                 <div className="border-t border-white/10 my-2" />
                 <Row label="Estimated Total" value={preview.breakdown.total} bold />
                 <Row label="30% Deposit Due to Reserve" value={preview.breakdown.depositDue} accent="orange" />
+                {!form.withinDeliveryRadius && (
+                  <p className="text-xs text-accent-orange pt-2">
+                    Additional delivery fees may apply outside our 10-mile radius and are not included above — we'll confirm when we follow up.
+                  </p>
+                )}
               </div>
             )}
           </div>

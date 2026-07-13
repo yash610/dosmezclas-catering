@@ -19,6 +19,15 @@ const ADDONS = [
   { label: 'Gulab Churro Balls', price: '$3.50/guest' },
 ];
 
+const SERVICE_OPTIONS = [
+  { label: 'Drop-Off Catering', charge: 'No service charge',
+    desc: 'Free delivery for Aubrey and surrounding areas within a 10-mile radius of Dos Mezclas. Food is delivered ready to serve.' },
+  { label: 'Drop-Off + Setup', charge: '18% service charge',
+    desc: 'Includes delivery, setup with burners and warmers, and pickup of equipment after the event.' },
+  { label: 'Full-Service Catering', charge: '25% service charge',
+    desc: 'Includes delivery, setup, servers during the event, and cleanup of our catering equipment.' },
+];
+
 export default function Home() {
   return (
     <div>
@@ -75,6 +84,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Service Options */}
+      <section className="max-w-6xl mx-auto px-5 md:px-8 py-14">
+        <h2 className="section-title text-2xl md:text-3xl">Catering Service Options</h2>
+        <p className="section-sub">Choose the level of service that fits your event.</p>
+        <div className="grid sm:grid-cols-3 gap-5 mt-8">
+          {SERVICE_OPTIONS.map((s) => (
+            <div key={s.label} className="card flex flex-col">
+              <div className="font-display font-bold text-xl">{s.label}</div>
+              <div className="text-accent-red font-semibold mt-1">{s.charge}</div>
+              <p className="text-clay/70 text-sm mt-3 flex-1">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-cream/50 text-xs mt-5">
+          Additional delivery fees may apply for locations outside the 10-mile radius.
+        </p>
+      </section>
+
       {/* How it works */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-14">
         <h2 className="section-title text-2xl md:text-3xl">How It Works</h2>
@@ -83,7 +110,7 @@ export default function Home() {
             ['1', 'Fill out the form', 'Tell us about your event, guest count, and menu preferences.'],
             ['2', 'Get an instant quote', 'Our pricing engine calculates your total on the spot — no waiting.'],
             ['3', 'Secure your date', 'Pay a 30% deposit to lock in your event date.'],
-            ['4', 'We handle the rest', 'Pickup, delivery, or full-service setup with servers — your choice.'],
+            ['4', 'We handle the rest', 'Drop-off, drop-off + setup, or full-service with servers — your choice.'],
           ].map(([n, title, desc]) => (
             <div key={n} className="card-dark">
               <div className="w-10 h-10 rounded-full bg-accent-red flex items-center justify-center font-display font-bold mb-3">{n}</div>

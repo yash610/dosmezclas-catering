@@ -24,6 +24,7 @@ router.post('/submit', async (req, res) => {
     fullName, phone, email,
     eventType, eventDate, eventTime, guestCount, serviceType, eventLocation,
     packages = [], addons = [], budget, specialInstructions, promoCode,
+    withinDeliveryRadius = true,
   } = req.body || {};
 
   if (!fullName || !phone || !email) {
@@ -36,7 +37,7 @@ router.post('/submit', async (req, res) => {
     return res.status(400).json({ error: 'Event location is required' });
   }
 
-  const quote = calculateQuote({ packages, addons, serviceType, guestCount, promoCode });
+  const quote = calculateQuote({ packages, addons, serviceType, guestCount, promoCode, withinDeliveryRadius });
   if (!quote.ok) return res.status(400).json({ error: quote.errors.join('; ') });
 
   // `package` column stores a JSON array so guests can mix multiple menus —

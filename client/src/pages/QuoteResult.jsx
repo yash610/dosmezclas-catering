@@ -25,7 +25,7 @@ export default function QuoteResult() {
           </div>
           <div className="text-right text-sm text-clay/60">
             <div>{form.guestCount} guests</div>
-            <div className="capitalize">{form.serviceType.replace('_', ' ')}</div>
+            <div>{quote.serviceType?.label || form.serviceType.replace('_', ' ')}</div>
           </div>
         </div>
 
@@ -37,16 +37,22 @@ export default function QuoteResult() {
               <Row key={p.key} label={`${p.label} × ${quote.guestCount} guests`} value={p.total} />
             ))}
             {quote.addons.map((a) => <Row key={a.key} label={a.label} value={a.total} />)}
-            <Row label={quote.serviceType.label} value={quote.serviceType.total} />
             {quote.breakdown.discountAmount > 0 && (
               <Row label={quote.breakdown.discountLabel} value={-quote.breakdown.discountAmount} accent="green" />
             )}
-            <Row label={`Service Charge (${(quote.breakdown.serviceChargeRate * 100).toFixed(0)}%)`} value={quote.breakdown.serviceCharge} />
+            {quote.breakdown.serviceChargeRate > 0 && (
+              <Row label={`Service Charge (${(quote.breakdown.serviceChargeRate * 100).toFixed(0)}%)`} value={quote.breakdown.serviceCharge} />
+            )}
             <Row label={`Tax (${(quote.breakdown.taxRate * 100).toFixed(2)}%)`} value={quote.breakdown.tax} />
             <div className="border-t border-clay/15 my-3" />
             <Row label="Total" value={quote.breakdown.total} bold />
             <Row label="30% Deposit Due to Reserve Your Date" value={quote.breakdown.depositDue} accent="orange" bold />
             <Row label="Remaining Balance (due day of event)" value={quote.breakdown.balanceDue} />
+            {quote.withinDeliveryRadius === false && (
+              <p className="text-xs text-accent-red pt-2">
+                Additional delivery fees may apply outside our 10-mile radius and are not included above — we'll confirm the exact amount when we follow up.
+              </p>
+            )}
           </div>
         )}
       </div>

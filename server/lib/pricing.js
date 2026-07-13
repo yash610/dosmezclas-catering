@@ -19,19 +19,37 @@ const ADDONS = {
   gulab_churro_balls: { label: 'Gulab Churro Balls', pricePerGuest: 3.5 },
 };
 
+// Service charge is now driven entirely by which service tier the guest
+// picks — Drop-Off carries none, Drop-Off + Setup adds 18%, Full-Service
+// adds 25%. There are no separate flat/per-guest delivery fees; delivery
+// within 10 miles of Aubrey, TX is free on every tier. Locations outside
+// that radius are flagged (see `withinDeliveryRadius`) for manual follow-up
+// rather than auto-calculated, since we don't have distance lookup wired in.
 const SERVICE_TYPES = {
-  pickup: { label: 'Pickup', flatFee: 0, perGuestFee: 0 },
-  delivery: { label: 'Delivery', flatFee: 35, perGuestFee: 0 },
-  full_service: { label: 'Full Service (Setup + Servers)', flatFee: 75, perGuestFee: 8 },
+  drop_off: {
+    label: 'Drop-Off Catering',
+    description: 'Free delivery within 10 miles of Aubrey, TX. Food delivered ready to serve — no additional service charge.',
+    serviceChargeRate: 0,
+  },
+  drop_off_setup: {
+    label: 'Drop-Off + Setup',
+    description: 'Delivery, setup with burners and warmers, and pickup of equipment after the event.',
+    serviceChargeRate: 0.18,
+  },
+  full_service: {
+    label: 'Full-Service Catering',
+    description: 'Delivery, setup, servers during the event, and cleanup of our catering equipment.',
+    serviceChargeRate: 0.25,
+  },
 };
 
 const TAX_RATE = 0.0825; // Aubrey, TX
-const SERVICE_CHARGE_RATE = 0.18;
 const DEPOSIT_RATE = 0.30;
 const PROMO_CODES = {
   DOSMEZCLAS10: 0.10,
 };
 const MIN_GUESTS = 10;
+const DELIVERY_RADIUS_MILES = 10;
 
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -44,9 +62,10 @@ function round2(n) {
  * @param {string} input.serviceType - key into SERVICE_TYPES
  * @param {number} input.guestCount
  * @param {string} [input.promoCode]
+ * @param {boolean} [input.withinDeliveryRadius] - defaults true; flags out-of-radius leads for manual delivery-fee follow-up
  */
 function calculateQuote(input) {
-  const { packages = [], addons = [], serviceType, guestCount, promoCode } = input;
+  const { packages = [], addons = [], serviceType, guestCount, promoCode, withinDeliveryRadius = true } = input;
 
   const errors = [];
 
@@ -80,7 +99,8 @@ function calculateQuote(input) {
       requiresManualQuote: true,
       packages: selectedPackages.map((p) => ({ key: p.key, label: p.label })),
       guestCount: guests,
-      serviceType: { key: serviceType, label: service.label },
+      withinDeliveryRadius,
+      serviceType: { key: serviceType, label: service.label, description: service.description, serviceChargeRate: service.serviceChargeRate },
       message: 'Custom menus are quoted individually. We’ll follow up within 24 hours with pricing.',
     };
   }
@@ -98,9 +118,7 @@ function calculateQuote(input) {
   });
   const addonsSubtotal = round2(addonLines.reduce((sum, l) => sum + l.total, 0));
 
-  const serviceFee = round2(service.flatFee + service.perGuestFee * guests);
-
-  const preDiscountSubtotal = round2(foodSubtotal + addonsSubtotal + serviceFee);
+  const preDiscountSubtotal = round2(foodSubtotal + addonsSubtotal);
 
   let discountRate = 0;
   let discountLabel = null;
@@ -112,7 +130,8 @@ function calculateQuote(input) {
 
   const netSubtotal = round2(preDiscountSubtotal - discountAmount);
 
-  const serviceCharge = round2(netSubtotal * SERVICE_CHARGE_RATE);
+  const serviceChargeRate = service.serviceChargeRate;
+  const serviceCharge = round2(netSubtotal * serviceChargeRate);
   const tax = round2(netSubtotal * TAX_RATE);
 
   const total = round2(netSubtotal + serviceCharge + tax);
@@ -123,19 +142,19 @@ function calculateQuote(input) {
     ok: true,
     requiresManualQuote: false,
     guestCount: guests,
+    withinDeliveryRadius,
     packages: packageLines,
     addons: addonLines,
-    serviceType: { key: serviceType, label: service.label, flatFee: service.flatFee, perGuestFee: service.perGuestFee, total: serviceFee },
+    serviceType: { key: serviceType, label: service.label, description: service.description, serviceChargeRate },
     breakdown: {
       foodSubtotal,
       addonsSubtotal,
-      serviceFee,
       preDiscountSubtotal,
       discountRate,
       discountLabel,
       discountAmount,
       netSubtotal,
-      serviceChargeRate: SERVICE_CHARGE_RATE,
+      serviceChargeRate,
       serviceCharge,
       taxRate: TAX_RATE,
       tax,
@@ -147,4 +166,4 @@ function calculateQuote(input) {
   };
 }
 
-module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, SERVICE_CHARGE_RATE, DEPOSIT_RATE, MIN_GUESTS, calculateQuote };
+module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, DEPOSIT_RATE, MIN_GUESTS, DELIVERY_RADIUS_MILES, calculateQuote };

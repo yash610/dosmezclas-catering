@@ -38,11 +38,12 @@ function renderQuoteTable(quote) {
   for (const a of quote.addons) {
     rows.push([a.label, money(a.total)]);
   }
-  rows.push([quote.serviceType.label, money(quote.serviceType.total)]);
   if (quote.breakdown.discountAmount > 0) {
     rows.push([quote.breakdown.discountLabel, `-${money(quote.breakdown.discountAmount)}`]);
   }
-  rows.push([`Service Charge (${(quote.breakdown.serviceChargeRate * 100).toFixed(0)}%)`, money(quote.breakdown.serviceCharge)]);
+  if (quote.breakdown.serviceChargeRate > 0) {
+    rows.push([`Service Charge (${(quote.breakdown.serviceChargeRate * 100).toFixed(0)}%)`, money(quote.breakdown.serviceCharge)]);
+  }
   rows.push([`Tax (${(quote.breakdown.taxRate * 100).toFixed(2)}%)`, money(quote.breakdown.tax)]);
 
   const rowsHtml = rows.map(([label, value]) => `
@@ -52,7 +53,12 @@ function renderQuoteTable(quote) {
     </tr>
   `).join('');
 
+  const radiusWarning = quote.withinDeliveryRadius === false
+    ? `<p style="margin:12px 0 0;color:#f1c40f;">⚠ Outside the 10-mile delivery radius — confirm the additional delivery fee before quoting a final total.</p>`
+    : '';
+
   return `
+    <p style="margin:0 0 8px;color:#f5ead8cc;">Service: <strong style="color:#f5ead8;">${quote.serviceType.label}</strong></p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       ${rowsHtml}
       <tr><td colspan="2" style="border-top:1px solid #f5ead833;padding-top:8px;"></td></tr>
@@ -69,6 +75,7 @@ function renderQuoteTable(quote) {
         <td style="padding:4px 0;text-align:right;color:#f5ead8cc;">${money(quote.breakdown.balanceDue)}</td>
       </tr>
     </table>
+    ${radiusWarning}
   `;
 }
 
@@ -125,7 +132,6 @@ async function sendOwnerNotification({ lead, quote }) {
         <tr><td style="color:#f5ead8cc;padding:2px 0;">Email</td><td style="text-align:right;">${lead.email}</td></tr>
         <tr><td style="color:#f5ead8cc;padding:2px 0;">Event</td><td style="text-align:right;">${lead.eventType || '—'} — ${lead.eventDate} at ${lead.eventTime}</td></tr>
         <tr><td style="color:#f5ead8cc;padding:2px 0;">Guests</td><td style="text-align:right;">${lead.guestCount}</td></tr>
-        <tr><td style="color:#f5ead8cc;padding:2px 0;">Service</td><td style="text-align:right;">${lead.serviceType.replace('_', ' ')}</td></tr>
         <tr><td style="color:#f5ead8cc;padding:2px 0;">Location</td><td style="text-align:right;">${lead.eventLocation}</td></tr>
         ${lead.budget ? `<tr><td style="color:#f5ead8cc;padding:2px 0;">Budget</td><td style="text-align:right;">${lead.budget}</td></tr>` : ''}
       </table>
