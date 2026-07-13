@@ -23,7 +23,7 @@ router.post('/submit', async (req, res) => {
   const {
     fullName, phone, email,
     eventType, eventDate, eventTime, guestCount, serviceType, eventLocation,
-    package: pkgKey, addons = [], budget, specialInstructions, promoCode,
+    packages = [], addons = [], budget, specialInstructions, promoCode,
   } = req.body || {};
 
   if (!fullName || !phone || !email) {
@@ -36,9 +36,11 @@ router.post('/submit', async (req, res) => {
     return res.status(400).json({ error: 'Event location is required' });
   }
 
-  const quote = calculateQuote({ package: pkgKey, addons, serviceType, guestCount, promoCode });
+  const quote = calculateQuote({ packages, addons, serviceType, guestCount, promoCode });
   if (!quote.ok) return res.status(400).json({ error: quote.errors.join('; ') });
 
+  // `package` column stores a JSON array so guests can mix multiple menus —
+  // same convention as the `addons` column.
   const result = await db.run(
     `INSERT INTO catering_leads
       (full_name, phone, email, event_type, event_date, event_time, guest_count,
@@ -47,7 +49,7 @@ router.post('/submit', async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new')`,
     [
       fullName, phone, email, eventType || null, eventDate, eventTime, Number(guestCount),
-      serviceType, eventLocation, pkgKey, JSON.stringify(addons), budget || null,
+      serviceType, eventLocation, JSON.stringify(packages), JSON.stringify(addons), budget || null,
       specialInstructions || null, promoCode || null, JSON.stringify(quote),
     ],
   );

@@ -8,7 +8,7 @@ const emptyForm = {
   fullName: '', phone: '', email: '',
   eventType: 'Wedding', eventDate: '', eventTime: '', guestCount: '',
   serviceType: 'pickup', eventLocation: '',
-  package: 'fajita_mixed', addons: [],
+  packages: ['fajita_mixed'], addons: [],
   budget: '', specialInstructions: '', promoCode: '',
 };
 
@@ -29,10 +29,10 @@ export default function RequestQuote() {
 
   // Debounced live preview
   useEffect(() => {
-    if (!guestsValid || !form.package || !form.serviceType) { setPreview(null); return; }
+    if (!guestsValid || form.packages.length === 0 || !form.serviceType) { setPreview(null); return; }
     const t = setTimeout(() => {
       api.post('/api/catering/preview', {
-        package: form.package,
+        packages: form.packages,
         addons: form.addons,
         serviceType: form.serviceType,
         guestCount: form.guestCount,
@@ -41,7 +41,7 @@ export default function RequestQuote() {
         .catch((e) => { setPreview(null); setPreviewError(e.message); });
     }, 350);
     return () => clearTimeout(t);
-  }, [form.package, form.addons, form.serviceType, form.guestCount, form.promoCode, guestsValid]);
+  }, [form.packages, form.addons, form.serviceType, form.guestCount, form.promoCode, guestsValid]);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -54,9 +54,16 @@ export default function RequestQuote() {
     }));
   }
 
+  function togglePackage(key) {
+    setForm((f) => ({
+      ...f,
+      packages: f.packages.includes(key) ? f.packages.filter((p) => p !== key) : [...f.packages, key],
+    }));
+  }
+
   const canSubmit = useMemo(() => {
     return form.fullName && form.phone && form.email && form.eventDate && form.eventTime
-      && guestsValid && form.eventLocation && form.package && form.serviceType;
+      && guestsValid && form.eventLocation && form.packages.length > 0 && form.serviceType;
   }, [form, guestsValid]);
 
   async function handleSubmit(e) {
@@ -135,12 +142,12 @@ export default function RequestQuote() {
 
         {/* Food Selection */}
         <FormSection title="Food Selection">
-          <Field label="Main Package" required>
+          <Field label="Main Package (select one or more — mix and match)" required>
             <div className="grid sm:grid-cols-2 gap-3">
               {Object.entries(options.packages).map(([key, p]) => (
                 <button type="button" key={key}
-                  onClick={() => update('package', key)}
-                  className={`text-left ${form.package === key ? 'pill-select-on' : 'pill-select-off'}`}>
+                  onClick={() => togglePackage(key)}
+                  className={`text-left ${form.packages.includes(key) ? 'pill-select-on' : 'pill-select-off'}`}>
                   <div>{p.label}</div>
                   <div className="text-xs opacity-70 font-normal">
                     {p.pricePerGuest === null ? 'Quoted individually' : `$${p.pricePerGuest}/guest`}
@@ -187,7 +194,9 @@ export default function RequestQuote() {
             )}
             {preview && !preview.requiresManualQuote && (
               <div className="text-sm space-y-1.5">
-                <Row label={`${preview.package.label} × ${preview.guestCount} guests`} value={preview.package.total} />
+                {preview.packages.map((p) => (
+                  <Row key={p.key} label={`${p.label} × ${preview.guestCount} guests`} value={p.total} />
+                ))}
                 {preview.addons.map((a) => <Row key={a.key} label={a.label} value={a.total} />)}
                 <Row label={preview.serviceType.label} value={preview.serviceType.total} />
                 {preview.breakdown.discountAmount > 0 && (

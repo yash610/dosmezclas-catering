@@ -39,18 +39,22 @@ function round2(n) {
 
 /**
  * @param {object} input
- * @param {string} input.package - key into PACKAGES
+ * @param {string[]} input.packages - keys into PACKAGES (one or more — guests can mix menus)
  * @param {string[]} input.addons - keys into ADDONS
  * @param {string} input.serviceType - key into SERVICE_TYPES
  * @param {number} input.guestCount
  * @param {string} [input.promoCode]
  */
 function calculateQuote(input) {
-  const { package: pkgKey, addons = [], serviceType, guestCount, promoCode } = input;
+  const { packages = [], addons = [], serviceType, guestCount, promoCode } = input;
 
   const errors = [];
-  const pkg = PACKAGES[pkgKey];
-  if (!pkg) errors.push(`Unknown package: ${pkgKey}`);
+
+  if (!Array.isArray(packages) || packages.length === 0) {
+    errors.push('Select at least one main package');
+  }
+  const invalidPackages = packages.filter((p) => !PACKAGES[p]);
+  if (invalidPackages.length) errors.push(`Unknown package(s): ${invalidPackages.join(', ')}`);
 
   const service = SERVICE_TYPES[serviceType];
   if (!service) errors.push(`Unknown service type: ${serviceType}`);
@@ -67,19 +71,25 @@ function calculateQuote(input) {
     return { ok: false, errors };
   }
 
-  // Custom menu can't be auto-priced — flag for manual follow-up.
-  if (pkg.pricePerGuest === null) {
+  const selectedPackages = packages.map((key) => ({ key, ...PACKAGES[key] }));
+
+  // Custom menu (or any package priced null) can't be auto-priced — flag for manual follow-up.
+  if (selectedPackages.some((p) => p.pricePerGuest === null)) {
     return {
       ok: true,
       requiresManualQuote: true,
-      package: { key: pkgKey, label: pkg.label },
+      packages: selectedPackages.map((p) => ({ key: p.key, label: p.label })),
       guestCount: guests,
       serviceType: { key: serviceType, label: service.label },
       message: 'Custom menus are quoted individually. We’ll follow up within 24 hours with pricing.',
     };
   }
 
-  const foodSubtotal = round2(pkg.pricePerGuest * guests);
+  const packageLines = selectedPackages.map((p) => {
+    const lineTotal = round2(p.pricePerGuest * guests);
+    return { key: p.key, label: p.label, pricePerGuest: p.pricePerGuest, total: lineTotal };
+  });
+  const foodSubtotal = round2(packageLines.reduce((sum, l) => sum + l.total, 0));
 
   const addonLines = addons.map((key) => {
     const a = ADDONS[key];
@@ -113,7 +123,7 @@ function calculateQuote(input) {
     ok: true,
     requiresManualQuote: false,
     guestCount: guests,
-    package: { key: pkgKey, label: pkg.label, pricePerGuest: pkg.pricePerGuest, total: foodSubtotal },
+    packages: packageLines,
     addons: addonLines,
     serviceType: { key: serviceType, label: service.label, flatFee: service.flatFee, perGuestFee: service.perGuestFee, total: serviceFee },
     breakdown: {

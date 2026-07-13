@@ -33,7 +33,9 @@ export default function QuoteResult() {
           <p className="text-clay/80">{quote.message}</p>
         ) : (
           <div className="space-y-2 text-sm">
-            <Row label={`${quote.package.label} × ${quote.guestCount} guests`} value={quote.package.total} />
+            {quote.packages.map((p) => (
+              <Row key={p.key} label={`${p.label} × ${quote.guestCount} guests`} value={p.total} />
+            ))}
             {quote.addons.map((a) => <Row key={a.key} label={a.label} value={a.total} />)}
             <Row label={quote.serviceType.label} value={quote.serviceType.total} />
             {quote.breakdown.discountAmount > 0 && (
