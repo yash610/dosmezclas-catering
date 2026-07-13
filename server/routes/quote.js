@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { PACKAGES, ADDONS, SERVICE_TYPES, calculateQuote } = require('../lib/pricing');
-const { sendCateringConfirmation } = require('../lib/mailer');
+const { sendCateringConfirmation, sendOwnerNotification } = require('../lib/mailer');
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.post('/preview', (req, res) => {
 });
 
 // Full submission — saves the lead, computes the authoritative quote, and
-// (optionally) emails a confirmation if SMTP is configured.
+// (optionally) emails the customer + the restaurant if SMTP is configured.
 router.post('/submit', async (req, res) => {
   const {
     fullName, phone, email,
@@ -54,18 +54,36 @@ router.post('/submit', async (req, res) => {
     ],
   );
 
-  let emailResult = { sent: false, reason: 'not_attempted' };
+  // Customer confirmation and owner notification are independent — one
+  // failing (or SMTP being unconfigured) never blocks the other or the
+  // lead from being saved.
+  let customerEmail = { sent: false, reason: 'not_attempted' };
   try {
-    emailResult = await sendCateringConfirmation({ to: email, name: fullName, quote });
+    customerEmail = await sendCateringConfirmation({ to: email, name: fullName, quote });
   } catch (err) {
-    console.error('[mailer] failed to send confirmation:', err.message);
-    emailResult = { sent: false, reason: 'error' };
+    console.error('[mailer] failed to send customer confirmation:', err.message);
+    customerEmail = { sent: false, reason: 'error' };
+  }
+
+  let ownerEmail = { sent: false, reason: 'not_attempted' };
+  try {
+    ownerEmail = await sendOwnerNotification({
+      lead: {
+        fullName, phone, email, eventType, eventDate, eventTime,
+        guestCount: Number(guestCount), serviceType, eventLocation,
+        budget, specialInstructions,
+      },
+      quote,
+    });
+  } catch (err) {
+    console.error('[mailer] failed to send owner notification:', err.message);
+    ownerEmail = { sent: false, reason: 'error' };
   }
 
   res.status(201).json({
     leadId: result.lastID,
     quote,
-    email: emailResult,
+    email: { customer: customerEmail, owner: ownerEmail },
     squarePaymentLink: quote.requiresManualQuote ? null : (process.env.SQUARE_PAYMENT_LINK || null),
   });
 });

@@ -59,14 +59,16 @@ SQLite is fine for local dev, but Vercel's serverless functions don't have persi
 
 ---
 
-## 4. Optional — turn on confirmation emails
+## 4. Optional — turn on emails (customer confirmation + owner notification)
 
 Fill in on the **API** project (Vercel → Settings → Environment Variables), then redeploy:
 
 - Gmail: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER=you@gmail.com`, `SMTP_PASS=<16-char App Password, not your normal password>`
 - SendGrid / Mailgun: use their SMTP relay credentials instead
+- `NOTIFY_EMAIL=manager@dosmezclas.com` — where the internal "new lead" email goes every time someone submits the form. Defaults to `SMTP_USER` if left blank.
+- `ADMIN_URL=https://<your-frontend-url>/admin/login` — optional, adds a direct link into the owner notification email.
 
-Leave all blank and the site keeps working — it just skips sending the email.
+Once set, every submission sends two emails: a confirmation to the customer with their quote breakdown, and a notification to `NOTIFY_EMAIL` with the customer's contact info, event details, and the same breakdown. Leave all blank and the site keeps working — it just skips sending both.
 
 ## 5. Optional — turn on the Square deposit button
 
@@ -113,7 +115,9 @@ npm run dev                 # http://localhost:5180
 | `JWT_SECRET` | Yes | Long random string — signs admin auth tokens |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | Yes | Your `/admin/leads` login, set before running `npm run seed` |
 | `CORS_ORIGIN` | Yes (prod) | Frontend URL |
-| `SMTP_*` | No | Confirmation emails — skipped if blank |
+| `SMTP_*` | No | Customer confirmation + owner notification emails — both skipped if blank |
+| `NOTIFY_EMAIL` | No | Who receives the internal "new lead" email on every submission. Defaults to `SMTP_USER` if blank |
+| `ADMIN_URL` | No | Link to `/admin/leads` included in the owner notification email |
 | `SQUARE_PAYMENT_LINK` | No | Deposit payment button — falls back to a phone-call CTA if blank |
 | `PORT` | No | Defaults to 4100 |
 

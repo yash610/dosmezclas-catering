@@ -65,7 +65,7 @@ export default function QuoteResult() {
       </div>
 
       <p className="text-cream/50 text-xs text-center mt-6 print:hidden">
-        {email?.sent
+        {email?.customer?.sent
           ? `A confirmation was also emailed to ${form.email}.`
           : 'Prices are estimates. We may follow up with any final adjustments before your deposit.'}
       </p>
