@@ -1,13 +1,13 @@
 const express = require('express');
 const db = require('../db');
-const { PACKAGES, ADDONS, SERVICE_TYPES, calculateQuote } = require('../lib/pricing');
+const { PACKAGES, ADDONS, SERVICE_TYPES, COMPLIMENTARY_NOTE, calculateQuote } = require('../lib/pricing');
 const { sendCateringConfirmation, sendOwnerNotification } = require('../lib/mailer');
 
 const router = express.Router();
 
 // Menu/pricing options for the form to render — client never hardcodes prices.
 router.get('/options', (_req, res) => {
-  res.json({ packages: PACKAGES, addons: ADDONS, serviceTypes: SERVICE_TYPES });
+  res.json({ packages: PACKAGES, addons: ADDONS, serviceTypes: SERVICE_TYPES, complimentaryNote: COMPLIMENTARY_NOTE });
 });
 
 // Live pricing preview — no lead is saved. Used as the user fills the form.

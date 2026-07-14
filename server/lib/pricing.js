@@ -4,15 +4,33 @@
 // the API rather than re-implementing this) so numbers can never drift.
 
 const PACKAGES = {
-  fajita_chicken: { label: 'Fajitas – Chicken', pricePerGuest: 14 },
-  fajita_beef: { label: 'Fajitas – Beef', pricePerGuest: 14 },
-  fajita_mixed: { label: 'Fajitas – Mixed (Most Popular)', pricePerGuest: 15 },
-  tacos: { label: 'Tacos Bar', pricePerGuest: 14 },
+  fajita_chicken: {
+    label: 'Fajitas – Chicken',
+    pricePerGuest: 14,
+    description: 'Chicken strips with bell peppers and onions. Served with corn or flour tortillas.',
+  },
+  fajita_beef: {
+    label: 'Fajitas – Beef',
+    pricePerGuest: 14,
+    description: 'Juicy beef strips, served with your choice of corn or flour tortillas.',
+  },
+  fajita_mixed: {
+    label: 'Fajitas – Mixed (Most Popular)',
+    pricePerGuest: 15,
+    description: 'Choice of portion (chicken and beef mixed), served with corn or flour tortillas.',
+  },
+  tacos: {
+    label: 'Tacos Bar',
+    pricePerGuest: 14,
+    description: 'Build-your-own taco bar with your choice of protein — a crowd favorite for casual events.',
+  },
   custom: { label: 'Custom Menu (quoted manually)', pricePerGuest: null },
 };
 
+// Chips & salsa are complimentary with every order, not a purchasable add-on.
+const COMPLIMENTARY_NOTE = 'Chips & salsa are complimentary with every order.';
+
 const ADDONS = {
-  chips_salsa: { label: 'Chips & Salsa', pricePerGuest: 2 },
   guacamole: { label: 'Guacamole', pricePerGuest: 2.5 },
   queso: { label: 'Queso', pricePerGuest: 2.5 },
   churros: { label: 'Churros', pricePerGuest: 3 },
@@ -166,4 +184,4 @@ function calculateQuote(input) {
   };
 }
 
-module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, DEPOSIT_RATE, MIN_GUESTS, DELIVERY_RADIUS_MILES, calculateQuote };
+module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, DEPOSIT_RATE, MIN_GUESTS, DELIVERY_RADIUS_MILES, COMPLIMENTARY_NOTE, calculateQuote };

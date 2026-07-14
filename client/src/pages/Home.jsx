@@ -2,17 +2,16 @@ import { Link } from 'react-router-dom';
 
 const PACKAGES = [
   { key: 'fajita_mixed', label: 'Fajitas – Mixed', badge: 'Most Popular', price: '$15/guest',
-    desc: 'Chicken & beef fajitas, rice & beans, corn & flour tortillas, chips & salsa.' },
+    desc: 'Choice of portion (chicken and beef mixed), served with corn or flour tortillas.' },
   { key: 'fajita_chicken', label: 'Fajitas – Chicken', price: '$14/guest',
-    desc: 'Grilled chicken fajitas with all the classic fixings.' },
+    desc: 'Chicken strips with bell peppers and onions. Served with corn or flour tortillas.' },
   { key: 'fajita_beef', label: 'Fajitas – Beef', price: '$14/guest',
-    desc: 'Grilled steak fajitas with all the classic fixings.' },
+    desc: 'Juicy beef strips, served with your choice of corn or flour tortillas.' },
   { key: 'tacos', label: 'Tacos Bar', price: '$14/guest',
     desc: 'Build-your-own taco bar — a crowd favorite for casual events.' },
 ];
 
 const ADDONS = [
-  { label: 'Chips & Salsa', price: '$2/guest' },
   { label: 'Guacamole', price: '$2.50/guest' },
   { label: 'Queso', price: '$2.50/guest' },
   { label: 'Churros', price: '$3/guest' },
@@ -74,7 +73,8 @@ export default function Home() {
       {/* Add-ons */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-14">
         <h2 className="section-title text-2xl md:text-3xl">Popular Add-Ons</h2>
-        <div className="grid sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
+        <p className="section-sub">Chips &amp; salsa are complimentary with every order.</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
           {ADDONS.map((a) => (
             <div key={a.label} className="card-dark text-center">
               <div className="font-semibold">{a.label}</div>

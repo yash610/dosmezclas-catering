@@ -178,6 +178,11 @@ export default function RequestQuote() {
                   <div className="text-xs opacity-70 font-normal">
                     {p.pricePerGuest === null ? 'Quoted individually' : `$${p.pricePerGuest}/guest`}
                   </div>
+                  {form.packages.includes(key) && p.description && (
+                    <div className="text-xs opacity-90 font-normal mt-2 pt-2 border-t border-current/20">
+                      {p.description}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -192,6 +197,9 @@ export default function RequestQuote() {
                 </button>
               ))}
             </div>
+            {options.complimentaryNote && (
+              <p className="text-xs text-accent-green mt-1">🌶 {options.complimentaryNote}</p>
+            )}
           </Field>
         </FormSection>
 
