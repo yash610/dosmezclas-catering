@@ -4,10 +4,10 @@ import { api } from '../api.js';
 import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 import Brand from '../components/Brand.jsx';
 
-const STATUSES = ['new', 'quoted', 'deposit_pending', 'confirmed', 'cancelled'];
+const STATUSES = ['new', 'quoted', 'deposit_pending', 'confirmed', 'completed', 'cancelled'];
 const STATUS_BADGE = {
   new: 'badge-orange', quoted: 'badge-yellow', deposit_pending: 'badge-red',
-  confirmed: 'badge-green', cancelled: 'badge-gray',
+  confirmed: 'badge-green', completed: 'badge-green', cancelled: 'badge-gray',
 };
 
 export default function AdminLeads() {
@@ -32,9 +32,10 @@ export default function AdminLeads() {
   }
 
   // Once a lead is confirmed, its deposit has been collected — the amount
-  // still outstanding is just the remaining balance, not the full total.
+  // still outstanding is just the remaining balance. Completed events have
+  // been paid in full, so they no longer contribute anything outstanding.
   const totalPipeline = leads
-    .filter((l) => l.status !== 'cancelled' && l.pricing?.breakdown)
+    .filter((l) => l.status !== 'cancelled' && l.status !== 'completed' && l.pricing?.breakdown)
     .reduce((sum, l) => sum + (l.status === 'confirmed' ? l.pricing.breakdown.balanceDue : l.pricing.breakdown.total), 0);
 
   return (
@@ -83,6 +84,11 @@ export default function AdminLeads() {
                   ✓ Deposit paid (${lead.pricing.breakdown.depositDue.toFixed(2)}) — ${lead.pricing.breakdown.balanceDue.toFixed(2)} remaining, due at the event.
                 </div>
               )}
+              {lead.status === 'completed' && lead.pricing?.breakdown && (
+                <div className="mt-3 rounded-xl bg-accent-green/10 border border-accent-green/20 px-3 py-2 text-sm text-accent-green font-semibold">
+                  ✓ Event complete — paid in full (${lead.pricing.breakdown.total.toFixed(2)}).
+                </div>
+              )}
               <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm text-clay/80">
                 <div><span className="text-clay/50">Event</span><br/>{lead.event_type} — {lead.event_date} {lead.event_time}</div>
                 <div><span className="text-clay/50">Guests</span><br/>{lead.guest_count} · {(lead.pricing?.serviceType?.label) || lead.service_type.replace('_',' ')}</div>
@@ -129,6 +135,7 @@ function OrderBreakdown({ pricing, status }) {
 
   const b = pricing.breakdown;
   const isConfirmed = status === 'confirmed';
+  const isCompleted = status === 'completed';
 
   return (
     <div className="mt-4 border-t border-clay/10 pt-3">
@@ -149,7 +156,9 @@ function OrderBreakdown({ pricing, status }) {
         <Row label={`Tax (${(b.taxRate * 100).toFixed(2)}%)`} value={b.tax} />
         <div className="border-t border-clay/10 my-1.5" />
         <Row label="Total" value={b.total} bold />
-        {isConfirmed ? (
+        {isCompleted ? (
+          <Row label="Paid in Full ✓" value={b.total} accent="green" bold />
+        ) : isConfirmed ? (
           <>
             <Row label="Deposit Paid ✓" value={b.depositDue} accent="green" />
             <Row label="Balance Due (at event)" value={b.balanceDue} accent="orange" bold />

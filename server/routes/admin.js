@@ -48,7 +48,7 @@ router.get('/leads/:id', authRequired, async (req, res) => {
 
 router.patch('/leads/:id/status', authRequired, async (req, res) => {
   const { status } = req.body || {};
-  const allowed = ['new', 'quoted', 'deposit_pending', 'confirmed', 'cancelled'];
+  const allowed = ['new', 'quoted', 'deposit_pending', 'confirmed', 'completed', 'cancelled'];
   if (!allowed.includes(status)) return res.status(400).json({ error: `status must be one of: ${allowed.join(', ')}` });
 
   await db.run(`UPDATE catering_leads SET status = $1 WHERE id = $2`, [status, req.params.id]);
