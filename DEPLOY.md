@@ -103,6 +103,18 @@ npm install
 npm run dev                 # http://localhost:5180
 ```
 
+## Changing the admin password
+
+`npm run seed` only ever *creates* the admin account the first time — running it again against a database that already has that email does nothing (by design, so redeploying never silently resets your password). To actually change it, run this from `catering-site/server` on your own machine, pointed at whichever database is live:
+
+```bash
+DB_CLIENT=pg DATABASE_URL="<your Neon connection string>" \
+  ADMIN_EMAIL=manager@dosmezclas.com NEW_ADMIN_PASSWORD="your-new-password" \
+  npm run passwd
+```
+
+If `ADMIN_EMAIL` doesn't have an account yet, this creates one instead of erroring — so it also works as a way to add a second manager login. No redeploy needed; it updates the database directly and takes effect on your next login.
+
 ---
 
 ## Environment variable reference
