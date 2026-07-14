@@ -8,6 +8,7 @@ import RequestQuote from './pages/RequestQuote.jsx';
 import QuoteResult from './pages/QuoteResult.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminLeads from './pages/AdminLeads.jsx';
+import AdminCalendar from './pages/AdminCalendar.jsx';
 
 function PublicLayout({ children }) {
   return (
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="/quote-result" element={<PublicLayout><QuoteResult /></PublicLayout>} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/leads" element={<PrivateAdmin><AdminLeads /></PrivateAdmin>} />
+      <Route path="/admin/calendar" element={<PrivateAdmin><AdminCalendar /></PrivateAdmin>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

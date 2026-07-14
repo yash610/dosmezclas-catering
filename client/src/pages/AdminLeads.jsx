@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 import Brand from '../components/Brand.jsx';
@@ -48,6 +48,7 @@ export default function AdminLeads() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="section-title text-2xl">Catering Leads</h1>
         <div className="flex items-center gap-3">
+          <Link to="/admin/calendar" className="btn-ghost text-sm">Calendar</Link>
           <select className="input !w-auto" value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">All statuses</option>
             {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
