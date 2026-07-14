@@ -68,6 +68,9 @@ const PROMO_CODES = {
 };
 const MIN_GUESTS = 10;
 const DELIVERY_RADIUS_MILES = 10;
+// Automatic bulk discount for larger events — no promo code needed.
+const BULK_DISCOUNT_GUEST_THRESHOLD = 20; // applies for more than 20 guests
+const BULK_DISCOUNT_RATE = 0.10;
 
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -138,12 +141,25 @@ function calculateQuote(input) {
 
   const preDiscountSubtotal = round2(foodSubtotal + addonsSubtotal);
 
-  let discountRate = 0;
-  let discountLabel = null;
+  // Two possible discounts — a promo code, or an automatic bulk discount for
+  // events over the guest threshold. They don't stack; whichever is larger
+  // applies, and ties favor the automatic bulk discount since it needs no code.
+  let promoRate = 0;
+  let promoLabel = null;
   if (promoCode && PROMO_CODES[promoCode.toUpperCase()]) {
-    discountRate = PROMO_CODES[promoCode.toUpperCase()];
-    discountLabel = `Promo code ${promoCode.toUpperCase()}`;
+    promoRate = PROMO_CODES[promoCode.toUpperCase()];
+    promoLabel = `Promo code ${promoCode.toUpperCase()}`;
   }
+
+  let bulkRate = 0;
+  let bulkLabel = null;
+  if (guests > BULK_DISCOUNT_GUEST_THRESHOLD) {
+    bulkRate = BULK_DISCOUNT_RATE;
+    bulkLabel = `Bulk discount (${BULK_DISCOUNT_GUEST_THRESHOLD}+ guests)`;
+  }
+
+  const discountRate = bulkRate >= promoRate ? bulkRate : promoRate;
+  const discountLabel = discountRate === 0 ? null : (bulkRate >= promoRate ? bulkLabel : promoLabel);
   const discountAmount = round2(preDiscountSubtotal * discountRate);
 
   const netSubtotal = round2(preDiscountSubtotal - discountAmount);
@@ -184,4 +200,4 @@ function calculateQuote(input) {
   };
 }
 
-module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, DEPOSIT_RATE, MIN_GUESTS, DELIVERY_RADIUS_MILES, COMPLIMENTARY_NOTE, calculateQuote };
+module.exports = { PACKAGES, ADDONS, SERVICE_TYPES, TAX_RATE, DEPOSIT_RATE, MIN_GUESTS, DELIVERY_RADIUS_MILES, COMPLIMENTARY_NOTE, BULK_DISCOUNT_GUEST_THRESHOLD, BULK_DISCOUNT_RATE, calculateQuote };

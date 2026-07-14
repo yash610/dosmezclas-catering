@@ -81,14 +81,17 @@ export default function AdminLeads() {
                 <div><span className="text-clay/50">Package</span><br/>{(lead.package || []).join(' + ')}{lead.addons?.length ? ` + ${lead.addons.length} add-ons` : ''}</div>
                 <div><span className="text-clay/50">Location</span><br/>{lead.event_location}{lead.pricing?.withinDeliveryRadius === false && <span className="badge-orange ml-2 align-middle">Outside 10mi</span>}</div>
               </div>
-              {lead.pricing?.breakdown && (
-                <div className="mt-4 flex flex-wrap gap-6 text-sm border-t border-clay/10 pt-3">
-                  <div><span className="text-clay/50">Total</span> <span className="font-bold">${lead.pricing.breakdown.total.toFixed(2)}</span></div>
-                  <div><span className="text-clay/50">Deposit Due</span> <span className="font-bold text-accent-red">${lead.pricing.breakdown.depositDue.toFixed(2)}</span></div>
-                </div>
+
+              {/* Full itemized order, exactly what the customer was quoted */}
+              {lead.pricing && (
+                <OrderBreakdown pricing={lead.pricing} />
               )}
+
               {lead.special_instructions && (
                 <div className="mt-3 text-sm text-clay/70 italic">"{lead.special_instructions}"</div>
+              )}
+              {lead.budget && (
+                <div className="mt-1 text-sm text-clay/70">Budget mentioned: {lead.budget}</div>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
                 {STATUSES.map((s) => (
@@ -102,6 +105,54 @@ export default function AdminLeads() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function OrderBreakdown({ pricing }) {
+  if (pricing.requiresManualQuote) {
+    return (
+      <div className="mt-4 border-t border-clay/10 pt-3 text-sm text-clay/70 italic">
+        {pricing.message}
+      </div>
+    );
+  }
+  if (!pricing.breakdown) return null;
+
+  const b = pricing.breakdown;
+
+  return (
+    <div className="mt-4 border-t border-clay/10 pt-3">
+      <div className="text-xs uppercase tracking-wide text-clay/40 mb-2">Full Order</div>
+      <div className="text-sm space-y-1">
+        {pricing.packages?.map((p) => (
+          <Row key={p.key} label={`${p.label} × ${pricing.guestCount} guests`} value={p.total} />
+        ))}
+        {pricing.addons?.map((a) => (
+          <Row key={a.key} label={`${a.label} × ${pricing.guestCount} guests`} value={a.total} />
+        ))}
+        {b.discountAmount > 0 && (
+          <Row label={b.discountLabel} value={-b.discountAmount} accent="green" />
+        )}
+        {b.serviceChargeRate > 0 && (
+          <Row label={`Service Charge (${(b.serviceChargeRate * 100).toFixed(0)}%)`} value={b.serviceCharge} />
+        )}
+        <Row label={`Tax (${(b.taxRate * 100).toFixed(2)}%)`} value={b.tax} />
+        <div className="border-t border-clay/10 my-1.5" />
+        <Row label="Total" value={b.total} bold />
+        <Row label="30% Deposit Due" value={b.depositDue} accent="orange" bold />
+        <Row label="Remaining Balance" value={b.balanceDue} />
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value, bold, accent }) {
+  const color = accent === 'green' ? 'text-accent-green' : accent === 'orange' ? 'text-accent-red' : 'text-clay/80';
+  return (
+    <div className={`flex justify-between ${bold ? 'font-bold text-clay' : color}`}>
+      <span>{label}</span>
+      <span>{value < 0 ? '-' : ''}${Math.abs(value).toFixed(2)}</span>
     </div>
   );
 }

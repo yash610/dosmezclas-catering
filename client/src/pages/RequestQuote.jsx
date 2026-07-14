@@ -124,6 +124,7 @@ export default function RequestQuote() {
           </div>
           <Field label="Number of Guests (minimum 10)" required>
             <input className="input" type="number" min="10" value={form.guestCount} onChange={(e) => update('guestCount', e.target.value)} required />
+            <p className="text-xs text-accent-green mt-1">🎉 Orders of more than 20 guests get an automatic 10% discount.</p>
           </Field>
           <Field label="Service Type" required>
             <div className="grid gap-3">
