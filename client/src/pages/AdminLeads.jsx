@@ -31,9 +31,11 @@ export default function AdminLeads() {
     setLeads((ls) => ls.map((l) => (l.id === id ? updated : l)));
   }
 
+  // Once a lead is confirmed, its deposit has been collected — the amount
+  // still outstanding is just the remaining balance, not the full total.
   const totalPipeline = leads
     .filter((l) => l.status !== 'cancelled' && l.pricing?.breakdown)
-    .reduce((sum, l) => sum + (l.pricing.breakdown.total || 0), 0);
+    .reduce((sum, l) => sum + (l.status === 'confirmed' ? l.pricing.breakdown.balanceDue : l.pricing.breakdown.total), 0);
 
   return (
     <div className="max-w-6xl mx-auto px-5 md:px-8 py-10">
@@ -57,7 +59,7 @@ export default function AdminLeads() {
       </div>
 
       <div className="card-dark mb-6">
-        <div className="text-cream/60 text-sm">Active Pipeline Value</div>
+        <div className="text-cream/60 text-sm">Outstanding Value (deposits already collected excluded)</div>
         <div className="font-display font-bold text-2xl text-accent-green">${totalPipeline.toFixed(2)}</div>
       </div>
 
@@ -76,6 +78,11 @@ export default function AdminLeads() {
                 </div>
                 <span className={STATUS_BADGE[lead.status] || 'badge-gray'}>{lead.status.replace('_', ' ')}</span>
               </div>
+              {lead.status === 'confirmed' && lead.pricing?.breakdown && (
+                <div className="mt-3 rounded-xl bg-accent-green/10 border border-accent-green/20 px-3 py-2 text-sm text-accent-green font-semibold">
+                  ✓ Deposit paid (${lead.pricing.breakdown.depositDue.toFixed(2)}) — ${lead.pricing.breakdown.balanceDue.toFixed(2)} remaining, due at the event.
+                </div>
+              )}
               <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm text-clay/80">
                 <div><span className="text-clay/50">Event</span><br/>{lead.event_type} — {lead.event_date} {lead.event_time}</div>
                 <div><span className="text-clay/50">Guests</span><br/>{lead.guest_count} · {(lead.pricing?.serviceType?.label) || lead.service_type.replace('_',' ')}</div>
@@ -85,7 +92,7 @@ export default function AdminLeads() {
 
               {/* Full itemized order, exactly what the customer was quoted */}
               {lead.pricing && (
-                <OrderBreakdown pricing={lead.pricing} />
+                <OrderBreakdown pricing={lead.pricing} status={lead.status} />
               )}
 
               {lead.special_instructions && (
@@ -110,7 +117,7 @@ export default function AdminLeads() {
   );
 }
 
-function OrderBreakdown({ pricing }) {
+function OrderBreakdown({ pricing, status }) {
   if (pricing.requiresManualQuote) {
     return (
       <div className="mt-4 border-t border-clay/10 pt-3 text-sm text-clay/70 italic">
@@ -121,6 +128,7 @@ function OrderBreakdown({ pricing }) {
   if (!pricing.breakdown) return null;
 
   const b = pricing.breakdown;
+  const isConfirmed = status === 'confirmed';
 
   return (
     <div className="mt-4 border-t border-clay/10 pt-3">
@@ -141,8 +149,17 @@ function OrderBreakdown({ pricing }) {
         <Row label={`Tax (${(b.taxRate * 100).toFixed(2)}%)`} value={b.tax} />
         <div className="border-t border-clay/10 my-1.5" />
         <Row label="Total" value={b.total} bold />
-        <Row label="30% Deposit Due" value={b.depositDue} accent="orange" bold />
-        <Row label="Remaining Balance" value={b.balanceDue} />
+        {isConfirmed ? (
+          <>
+            <Row label="Deposit Paid ✓" value={b.depositDue} accent="green" />
+            <Row label="Balance Due (at event)" value={b.balanceDue} accent="orange" bold />
+          </>
+        ) : (
+          <>
+            <Row label="30% Deposit Due" value={b.depositDue} accent="orange" bold />
+            <Row label="Remaining Balance" value={b.balanceDue} />
+          </>
+        )}
       </div>
     </div>
   );

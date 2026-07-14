@@ -176,7 +176,8 @@ export default function AdminCalendar() {
                       {lead.pricing?.breakdown && (
                         <div className="mt-4 flex flex-wrap gap-6 text-sm border-t border-clay/10 pt-3">
                           <div><span className="text-clay/50">Total</span> <span className="font-bold">${lead.pricing.breakdown.total.toFixed(2)}</span></div>
-                          <div><span className="text-clay/50">Deposit Due</span> <span className="font-bold text-accent-red">${lead.pricing.breakdown.depositDue.toFixed(2)}</span></div>
+                          <div><span className="text-clay/50">Deposit Paid ✓</span> <span className="font-bold text-accent-green">${lead.pricing.breakdown.depositDue.toFixed(2)}</span></div>
+                          <div><span className="text-clay/50">Balance Due</span> <span className="font-bold text-accent-red">${lead.pricing.breakdown.balanceDue.toFixed(2)}</span></div>
                         </div>
                       )}
                     </div>
